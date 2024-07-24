@@ -88,7 +88,8 @@ class Graph {
     }
 }
 
-
+// TODO: split Graph grammar rule into two, pattern (left side) and replacement (right side)
+// right side should be a list of possible options.
 class GraphGrammarRule {
     public List<string> NodeLabelsToMatch { get; set; }
     public List<(string from, string to)> EdgeLabelsToMatch { get; set; }
