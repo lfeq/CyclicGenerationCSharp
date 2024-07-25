@@ -1,15 +1,21 @@
 ﻿{
   "Nodes": [
-    "A",
-    "C"
+    {
+      "Label": "A",
+      "Type": "Entrance"
+    },
+    {
+      "Label": "B",
+      "Type": "Goal"
+    }
   ],
   "Edges": [
     {
       "From": "A",
-      "To": "C"
+      "To": "B"
     },
     {
-      "From": "C",
+      "From": "B",
       "To": "A"
     }
   ]

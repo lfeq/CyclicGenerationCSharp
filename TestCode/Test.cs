@@ -1,11 +1,49 @@
 ﻿using System.Text.Json;
 
-class Node {
-    public string Label { get; set; }
+public class Node {
+    public int Id { get; private set; }
+    public RoomType RoomType { get; private set; }
 
-    public Node(string t_label) {
-        Label = t_label;
+    public class Builder {
+        private int m_id = 0;
+        private RoomType m_roomType = RoomType.None;
+        
+
+        public Builder withId(int t_id) {
+            m_id = t_id;
+            return this;
+        }
+
+        public Builder withRoomType(string t_roomType) {
+            switch (t_roomType) {
+                case "Goal":
+                    m_roomType = RoomType.Goal;
+                    break;
+                case "Entrance":
+                    m_roomType = RoomType.Entrance;
+                    break;
+                case "Room":
+                    m_roomType = RoomType.Room;
+                    break;
+                default:
+                    throw new Exception($"{t_roomType} is not recognized as a room type");
+                    break;
+            }
+            return this;
+        }
+
+        public Node build() {
+            return new Node { Id = m_id, 
+                RoomType = m_roomType };;
+        }
     }
+}
+
+public enum RoomType {
+    None = 0,
+    Entrance = 1,
+    Goal = 2,
+    Room = 3,
 }
 
 class Edge {
@@ -22,7 +60,10 @@ class Graph {
     public List<Node> Nodes { get; } = new List<Node>();
     public List<Edge> Edges { get; } = new List<Edge>();
 
+    private int m_totalNodes = 0; // Used to assign ID to node.
+
     public void addNode(Node t_node) {
+        m_totalNodes++;
         Nodes.Add(t_node);
     }
 
@@ -42,44 +83,67 @@ class Graph {
     public void print() {
         Console.WriteLine("Nodes:");
         foreach (Node node in Nodes) {
-            Console.WriteLine($" - {node.Label}");
+            Console.WriteLine($" - {node.Id}");
         }
         Console.WriteLine("Edges:");
         foreach (Edge edge in Edges) {
-            Console.WriteLine($" - {edge.From.Label} -> {edge.To.Label}");
+            Console.WriteLine($" - {edge.From.Id} -> {edge.To.Id}");
         }
     }
 
+    /// <summary>
+    /// Loads the graph data from a JSON file and populates the graph with nodes and edges.
+    /// </summary>
+    /// <param name="t_filePath">The file path to the JSON file containing the graph data.</param>
     public void loadFromJsonFile(string t_filePath) {
+        // Dictionary to map node IDs to their labels.
+        Dictionary<int, string> idDictionary = new Dictionary<int, string>();
+        // Read the JSON content from the file.
         string jsonString = File.ReadAllText(t_filePath);
+        // Deserialize the JSON content into a GraphData object.
         GraphData? graphData = JsonSerializer.Deserialize<GraphData>(jsonString);
         if (graphData == null) {
             return;
         }
-        foreach (string nodeLabel in graphData.Nodes) {
-            addNode(new Node(nodeLabel));
+        // Add nodes to the graph based on the deserialized data.
+        foreach (NodeData nodeData in graphData.Nodes) {
+            idDictionary.Add(m_totalNodes, nodeData.Label);
+            addNode(new Node.Builder()
+                .withId(m_totalNodes)
+                .withRoomType(nodeData.Type)
+                .build());
         }
+        // Add edges to the graph based on the deserialized data.
         foreach (EdgeData edgeData in graphData.Edges) {
-            Node? fromNode = Nodes.FirstOrDefault(n => n.Label == edgeData.From);
-            Node? toNode = Nodes.FirstOrDefault(n => n.Label == edgeData.To);
+            // Will iterate over the Nodes list and find the node with Label "A". It will set fromNode to that node.
+            Node? fromNode = Nodes.FirstOrDefault(n => idDictionary[n.Id] == edgeData.From);
+            Node? toNode = Nodes.FirstOrDefault(n => idDictionary[n.Id] == edgeData.To);
             if (fromNode != null && toNode != null) {
                 addEdge(new Edge(fromNode, toNode));
             }
         }
     }
 
-    public void SaveToJsonFile(string t_filePath) {
+
+    public void saveToJsonFile(string t_filePath) {
         GraphData graphData = new GraphData {
-            Nodes = Nodes.Select(t_node => t_node.Label).ToList(),
-            Edges = Edges.Select(t_edge => new EdgeData { From = t_edge.From.Label, To = t_edge.To.Label }).ToList()
+            Nodes = Nodes.Select(t_node => new NodeData
+                { Label = t_node.Id.ToString(), Type = t_node.RoomType.ToString() }).ToList(),
+            Edges = Edges.Select(t_edge => new EdgeData
+                { From = t_edge.From.Id.ToString(), To = t_edge.To.Id.ToString() }).ToList()
         };
         string jsonString = JsonSerializer.Serialize(graphData, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(t_filePath, jsonString);
     }
 
     private class GraphData {
-        public List<string> Nodes { get; set; }
+        public List<NodeData> Nodes { get; set; }
         public List<EdgeData> Edges { get; set; }
+    }
+
+    private class NodeData {
+        public string Label { get; set; }
+        public string Type { get; set; }
     }
 
     private class EdgeData {
@@ -96,55 +160,24 @@ class GraphGrammarRule {
     public List<string> NewNodeLabels { get; set; }
     public List<(string from, string to)> NewEdges { get; set; }
 
-    public void apply(Graph t_graph) {
-        List<Node> matchedNodes = t_graph.Nodes.Where(t_n => NodeLabelsToMatch.Contains(t_n.Label)).ToList();
-        if (matchedNodes.Count == NodeLabelsToMatch.Count) {
-            List<Edge> matchedEdges = t_graph.Edges.Where(t_e =>
-                EdgeLabelsToMatch.Any(t_elm => t_elm.from == t_e.From.Label && t_elm.to == t_e.To.Label)).ToList();
-            if (matchedEdges.Count == EdgeLabelsToMatch.Count) {
-                foreach (Edge edge in matchedEdges) {
-                    t_graph.removeEdge(edge);
-                }
-                foreach (string label in NewNodeLabels) {
-                    t_graph.addNode(new Node(label));
-                }
-                foreach ((string from, string to) in NewEdges) {
-                    Node fromNode = t_graph.Nodes.First(t_n => t_n.Label == from);
-                    Node toNode = t_graph.Nodes.First(t_n => t_n.Label == to);
-                    t_graph.addEdge(new Edge(fromNode, toNode));
-                }
-            }
-        }
-    }
-}
-
-class Test {
-    public static void main() {
-        // Create graph
-        Graph graph = new Graph();
-        graph.loadFromJsonFile("initialGraph.json");
-        Console.WriteLine("Original graph:");
-        graph.print();
-
-        // // Define a graph grammar rule to replace subgraph A->B->C with A->B, B->D, D->C
-        // GraphGrammarRule rule = new GraphGrammarRule {
-        //     NodeLabelsToMatch = new List<string> { "A", "B", "C" },
-        //     EdgeLabelsToMatch = new List<(string from, string to)> {
-        //         ("A", "B"),
-        //         ("B", "C")
-        //     },
-        //     NewNodeLabels = new List<string> { "D" },
-        //     NewEdges = new List<(string from, string to)> {
-        //         ("A", "B"),
-        //         ("B", "D"),
-        //         ("D", "C")
-        //     }#
-        // };
-        //
-        // // Apply the rule
-        // rule.apply(graph);
-        // Console.WriteLine("Graph after applying the rule:");
-        // graph.print();
-        graph.SaveToJsonFile("changed_graph.json");
-    }
+    // public void apply(Graph t_graph) {
+    //     List<Node> matchedNodes = t_graph.Nodes.Where(t_n => NodeLabelsToMatch.Contains(t_n.Label)).ToList();
+    //     if (matchedNodes.Count == NodeLabelsToMatch.Count) {
+    //         List<Edge> matchedEdges = t_graph.Edges.Where(t_e =>
+    //             EdgeLabelsToMatch.Any(t_elm => t_elm.from == t_e.From.Label && t_elm.to == t_e.To.Label)).ToList();
+    //         if (matchedEdges.Count == EdgeLabelsToMatch.Count) {
+    //             foreach (Edge edge in matchedEdges) {
+    //                 t_graph.removeEdge(edge);
+    //             }
+    //             foreach (string label in NewNodeLabels) {
+    //                 t_graph.addNode(new Node(label));
+    //             }
+    //             foreach ((string from, string to) in NewEdges) {
+    //                 Node fromNode = t_graph.Nodes.First(t_n => t_n.Label == from);
+    //                 Node toNode = t_graph.Nodes.First(t_n => t_n.Label == to);
+    //                 t_graph.addEdge(new Edge(fromNode, toNode));
+    //             }
+    //         }
+    //     }
+    // }
 }
