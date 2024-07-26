@@ -1,64 +1,5 @@
 ﻿using System.Text.Json;
 
-public class Node {
-    public int Id { get; private set; }
-    public RoomType RoomType { get; private set; }
-
-    public class Builder {
-        private int m_id = 0;
-        private RoomType m_roomType = RoomType.None;
-
-
-        public Builder withId(int t_id) {
-            m_id = t_id;
-            return this;
-        }
-
-        public Builder withRoomType(string t_roomType) {
-            switch (t_roomType) {
-                case "Goal":
-                    m_roomType = RoomType.Goal;
-                    break;
-                case "Entrance":
-                    m_roomType = RoomType.Entrance;
-                    break;
-                case "Room":
-                    m_roomType = RoomType.Room;
-                    break;
-                default:
-                    throw new Exception($"{t_roomType} is not recognized as a room type");
-                    break;
-            }
-            return this;
-        }
-
-        public Node build() {
-            return new Node {
-                Id = m_id,
-                RoomType = m_roomType
-            };
-            ;
-        }
-    }
-}
-
-public enum RoomType {
-    None = 0,
-    Entrance = 1,
-    Goal = 2,
-    Room = 3,
-}
-
-public class Edge {
-    public Node From { get; set; }
-    public Node To { get; set; }
-
-    public Edge(Node t_from, Node t_to) {
-        From = t_from;
-        To = t_to;
-    }
-}
-
 public class Graph {
     public List<Node> Nodes { get; } = new List<Node>();
     public List<Edge> Edges { get; } = new List<Edge>();
@@ -83,10 +24,9 @@ public class Graph {
         Edges.Remove(t_edge);
     }
 
-    private bool containsNode(RoomType t_roomType) {
+    private bool containsNode(Node t_node) {
         foreach (Node node in Nodes) {
-            // TODO: Add an operator override in Node
-            if (node.RoomType == t_roomType) {
+            if (node == t_node) {
                 return true;
             }
         }
@@ -95,7 +35,7 @@ public class Graph {
 
     private bool containsEdge(Edge t_edge) {
         foreach (Edge edge in Edges) {
-            // TODO: Add an operator override in edge
+            
             if (edge.To.RoomType == t_edge.To.RoomType && edge.From.RoomType == t_edge.From.RoomType) {
                 return true;
             }
@@ -106,7 +46,7 @@ public class Graph {
     // TODO: Create JSON syntax to represent a transform rule.
     public void hasSubgraph(GraphGrammarRule t_rule) {
         foreach (Node ruleNode in t_rule.rule.Nodes) {
-            if (!containsNode(ruleNode.RoomType)) {
+            if (!containsNode(ruleNode)) {
                 continue;
             }
             Console.WriteLine($"Node {ruleNode.RoomType.ToString()} exists in graph");
