@@ -7,7 +7,7 @@ public class Node {
     public class Builder {
         private int m_id = 0;
         private RoomType m_roomType = RoomType.None;
-        
+
 
         public Builder withId(int t_id) {
             m_id = t_id;
@@ -33,8 +33,11 @@ public class Node {
         }
 
         public Node build() {
-            return new Node { Id = m_id, 
-                RoomType = m_roomType };;
+            return new Node {
+                Id = m_id,
+                RoomType = m_roomType
+            };
+            ;
         }
     }
 }
@@ -46,7 +49,7 @@ public enum RoomType {
     Room = 3,
 }
 
-class Edge {
+public class Edge {
     public Node From { get; set; }
     public Node To { get; set; }
 
@@ -56,28 +59,66 @@ class Edge {
     }
 }
 
-class Graph {
+public class Graph {
     public List<Node> Nodes { get; } = new List<Node>();
     public List<Edge> Edges { get; } = new List<Edge>();
 
     private int m_totalNodes = 0; // Used to assign ID to node.
 
-    public void addNode(Node t_node) {
+    private void addNode(Node t_node) {
         m_totalNodes++;
         Nodes.Add(t_node);
     }
 
-    public void addEdge(Edge t_edge) {
+    private void addEdge(Edge t_edge) {
         Edges.Add(t_edge);
     }
 
-    public void removeNode(Node t_node) {
+    private void removeNode(Node t_node) {
         Nodes.Remove(t_node);
         Edges.RemoveAll(t_e => t_e.From == t_node || t_e.To == t_node);
     }
 
-    public void removeEdge(Edge t_edge) {
+    private void removeEdge(Edge t_edge) {
         Edges.Remove(t_edge);
+    }
+
+    private bool containsNode(RoomType t_roomType) {
+        foreach (Node node in Nodes) {
+            // TODO: Add an operator override in Node
+            if (node.RoomType == t_roomType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool containsEdge(Edge t_edge) {
+        foreach (Edge edge in Edges) {
+            // TODO: Add an operator override in edge
+            if (edge.To.RoomType == t_edge.To.RoomType && edge.From.RoomType == t_edge.From.RoomType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // TODO: Create JSON syntax to represent a transform rule.
+    public void hasSubgraph(GraphGrammarRule t_rule) {
+        foreach (Node ruleNode in t_rule.rule.Nodes) {
+            if (!containsNode(ruleNode.RoomType)) {
+                continue;
+            }
+            Console.WriteLine($"Node {ruleNode.RoomType.ToString()} exists in graph");
+        }
+        foreach (Edge ruleEdge in t_rule.rule.Edges) {
+            if (!containsEdge(ruleEdge)) {
+                continue;
+            }
+            Console.WriteLine(
+                $"Edge: from: {ruleEdge.From.RoomType.ToString()} to: {ruleEdge.To.RoomType.ToString()} exists in graph");
+        }
+        Console.WriteLine("Rule is subgraph of graph");
     }
 
     public void print() {
@@ -135,30 +176,30 @@ class Graph {
         string jsonString = JsonSerializer.Serialize(graphData, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(t_filePath, jsonString);
     }
-
-    private class GraphData {
-        public List<NodeData> Nodes { get; set; }
-        public List<EdgeData> Edges { get; set; }
-    }
-
-    private class NodeData {
-        public string Label { get; set; }
-        public string Type { get; set; }
-    }
-
-    private class EdgeData {
-        public string From { get; set; }
-        public string To { get; set; }
-    }
 }
 
-// TODO: split Graph grammar rule into two, pattern (left side) and replacement (right side)
-// right side should be a list of possible options.
-class GraphGrammarRule {
-    public List<string> NodeLabelsToMatch { get; set; }
-    public List<(string from, string to)> EdgeLabelsToMatch { get; set; }
-    public List<string> NewNodeLabels { get; set; }
-    public List<(string from, string to)> NewEdges { get; set; }
+public class GraphData {
+    public List<NodeData> Nodes { get; set; }
+    public List<EdgeData> Edges { get; set; }
+}
+
+public class NodeData {
+    public string Label { get; set; }
+    public string Type { get; set; }
+}
+
+public class EdgeData {
+    public string From { get; set; }
+    public string To { get; set; }
+}
+
+public class GraphGrammarRule {
+    public readonly Graph rule;
+
+    public GraphGrammarRule(string t_filePath) {
+        rule = new Graph();
+        rule.loadFromJsonFile(t_filePath);
+    }
 
     // public void apply(Graph t_graph) {
     //     List<Node> matchedNodes = t_graph.Nodes.Where(t_n => NodeLabelsToMatch.Contains(t_n.Label)).ToList();
