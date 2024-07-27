@@ -8,7 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="initialGraph.json">
+      <None Update="Graphs\initialGraph.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Graphs\rule1.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

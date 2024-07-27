@@ -1,7 +1,15 @@
 ﻿public class Node {
-    public int Id { get; private set; }
-    public RoomType RoomType { get; private set; }
 
+    public int XPosition { get; private set; }
+    public int YPosition { get; private set; }
+    public NodeType NodeType { get; private set; }
+    public List<Node> adjacentNodes = new List<Node>();
+
+    public void setRoomType(NodeType t_nodeType) {
+        NodeType = t_nodeType;
+    }
+
+    #region Overrides
     public static bool operator ==(Node t_left, Node t_right) {
         if (ReferenceEquals(t_left, t_right)) {
             return true;
@@ -9,54 +17,81 @@
         if (ReferenceEquals(t_left, null) || ReferenceEquals(t_right, null)) {
             return false;
         } // Checks if either object is null.
-        return t_left.RoomType == t_right.RoomType;
+        return t_left.NodeType == t_right.NodeType;
     }
 
     public static bool operator !=(Node t_left, Node t_right) {
         return !(t_left == t_right);
     }
+    
+    public override string ToString() {
+        switch (NodeType) {
+            case NodeType.None:
+                return ".";
+            case NodeType.Entrance:
+                return "e";
+            case NodeType.Goal:
+                return "g";
+            case NodeType.Room:
+                return "R";
+            case NodeType.CycleEntrance:
+                return "S";
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+    #endregion
 
     public class Builder {
-        private int m_id = 0;
-        private RoomType m_roomType = RoomType.None;
+        private int m_xPosition = 0;
+        private int m_yPosition = 0;
+        private NodeType m_nodeType = NodeType.None;
 
 
-        public Builder withId(int t_id) {
-            m_id = t_id;
+        public Builder withPosition(int t_xPosition, int t_yPosition) {
+            m_xPosition = t_xPosition;
+            m_yPosition = t_yPosition;
             return this;
         }
 
-        public Builder withRoomType(string t_roomType) {
-            switch (t_roomType) {
-                case "Goal":
-                    m_roomType = RoomType.Goal;
+        public Builder withRoomType(NodeType t_nodeType) {
+            switch (t_nodeType) {
+                case NodeType.Goal:
+                    m_nodeType = NodeType.Goal;
                     break;
-                case "Entrance":
-                    m_roomType = RoomType.Entrance;
+                case NodeType.Entrance:
+                    m_nodeType = NodeType.Entrance;
                     break;
-                case "Room":
-                    m_roomType = RoomType.Room;
+                case NodeType.Room:
+                    m_nodeType = NodeType.Room;
                     break;
                 default:
-                    throw new Exception($"{t_roomType} is not recognized as a room type");
+                    throw new Exception($"{t_nodeType} is not recognized as a room type");
                     break;
             }
             return this;
         }
 
-        public Node build() {
+        public Node? build() {
             return new Node {
-                Id = m_id,
-                RoomType = m_roomType
+                XPosition = m_xPosition,
+                YPosition = m_yPosition,
+                NodeType = m_nodeType
             };
             ;
         }
     }
 }
 
-public enum RoomType {
+public enum NodeType {
     None = 0,
     Entrance = 1,
     Goal = 2,
     Room = 3,
+    CycleEntrance = 4,
+}
+
+public class NodeData {
+    public string Label { get; set; }
+    public string Type { get; set; }
 }

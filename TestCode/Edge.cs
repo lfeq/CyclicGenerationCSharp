@@ -14,10 +14,15 @@
         if (ReferenceEquals(t_left, null) || ReferenceEquals(t_right, null)) {
             return false;
         } // Checks if either object is null.
-        return (t_left.To.RoomType == t_right.To.RoomType) && (t_left.From.RoomType == t_right.From.RoomType);
+        return (t_left.To.NodeType == t_right.To.NodeType) && (t_left.From.NodeType == t_right.From.NodeType);
     }
 
     public static bool operator !=(Edge t_left, Edge t_right) {
         return !(t_left == t_right);
     }
+}
+
+public class EdgeData {
+    public string From { get; set; }
+    public string To { get; set; }
 }

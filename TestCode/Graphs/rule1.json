@@ -1,0 +1,22 @@
+﻿{
+  "Nodes": [
+    {
+      "Label": "A",
+      "Type": "Entrance"
+    }
+  ],
+  "Edges": [
+  ],
+  "NewNodes": [
+    {
+      "Label": "B",
+      "Type": "Room"
+    }
+  ],
+  "NewEdges": [
+    {
+      "From": "A",
+      "To": "B"
+    }
+  ]
+}
