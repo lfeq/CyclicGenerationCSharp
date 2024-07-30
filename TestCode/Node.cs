@@ -1,15 +1,23 @@
-﻿public class Node {
+﻿using TestCode;
 
-    public int XPosition { get; private set; }
-    public int YPosition { get; private set; }
+public class Node {
+    public Vector2 Position { get; private set; }
     public NodeType NodeType { get; private set; }
-    public List<Node> adjacentNodes = new List<Node>();
+    public readonly List<Node> adjacentNodes = new List<Node>();
+    
+    // Pathfinding variables
+    public float shortestDistance;
+    public Node previousNode;
+    public float distanceToTarget;
+    public float heuristic;
+    public List<Node> neighbourNodes = new List<Node>();
 
     public void setRoomType(NodeType t_nodeType) {
         NodeType = t_nodeType;
     }
 
     #region Overrides
+
     public static bool operator ==(Node t_left, Node t_right) {
         if (ReferenceEquals(t_left, t_right)) {
             return true;
@@ -23,7 +31,7 @@
     public static bool operator !=(Node t_left, Node t_right) {
         return !(t_left == t_right);
     }
-    
+
     public override string ToString() {
         switch (NodeType) {
             case NodeType.None:
@@ -36,10 +44,13 @@
                 return "R";
             case NodeType.CycleEntrance:
                 return "S";
+            case NodeType.Cycle:
+                return "C";
             default:
                 throw new ArgumentOutOfRangeException();
         }
     }
+
     #endregion
 
     public class Builder {
@@ -74,8 +85,7 @@
 
         public Node? build() {
             return new Node {
-                XPosition = m_xPosition,
-                YPosition = m_yPosition,
+                Position = new Vector2(m_xPosition, m_yPosition),
                 NodeType = m_nodeType
             };
             ;
@@ -89,6 +99,7 @@ public enum NodeType {
     Goal = 2,
     Room = 3,
     CycleEntrance = 4,
+    Cycle = 5,
 }
 
 public class NodeData {

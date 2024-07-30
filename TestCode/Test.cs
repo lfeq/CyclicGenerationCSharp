@@ -1,5 +1,8 @@
-﻿public class Graph {
+﻿using TestCode;
+
+public class Graph {
     private readonly Node[,] m_grid;
+    private readonly Node[] m_nodeArray;
     private readonly int m_width;
     private readonly int m_height;
     private Random m_random = new Random();
@@ -8,11 +11,20 @@
         m_width = t_width;
         m_height = t_height;
         m_grid = new Node[t_width, t_height];
+        m_nodeArray = new Node[m_width * m_height];
+        int i = 0;
         for (int y = 0; y < t_height; y++) {
             for (int x = 0; x < t_width; x++) {
                 m_grid[x, y] = new Node.Builder()
                     .withPosition(x, y)
                     .build();
+                m_nodeArray[i++] = m_grid[x, y];
+            }
+        }
+        // Setup weights
+        for (int y = 0; y < t_height; y++) {
+            for (int x = 0; x < t_width; x++) {
+                m_grid[x, y].neighbourNodes = getNeighbourNodes(m_grid[x, y]);
             }
         }
     }
@@ -26,16 +38,62 @@
 
     public void setCycleEntrance() {
         Node? startNode = getFirstNodeOfType(NodeType.Entrance);
-        if (startNode == null) {
+        if (startNode is null) {
             throw new NullReferenceException("There is no entrance in the graph");
         }
         List<Node> neighbourNodes = getNeighbourNodes(startNode);
         neighbourNodes[m_random.Next(0, neighbourNodes.Count)].setRoomType(NodeType.CycleEntrance);
     }
 
+    public void generatePath(int t_maxIterations) {
+        Node? cycleStartNode = getFirstNodeOfType(NodeType.CycleEntrance);
+        if (cycleStartNode is null) {
+            throw new NullReferenceException("There is no cycle entrance in the graph");
+        }
+        Node lastNode = cycleStartNode;
+        for (int i = 0; i < t_maxIterations; i++) {
+            List<Node> lastNodeNeighbours = getNeighbourNodes(lastNode);
+            Node? nextNode = getFurthestNodeFromList(lastNodeNeighbours, cycleStartNode);
+            nextNode.setRoomType(NodeType.Cycle);
+            addEdge(nextNode, lastNode);
+            lastNode = nextNode;
+        }
+        Console.WriteLine("Before connecting");
+        Console.WriteLine(this.ToString());
+        connectCycle(lastNode);
+    }
+
+    private void connectCycle(Node t_startNode) {
+        Node? cycleStartNode = getFirstNodeOfType(NodeType.CycleEntrance);
+        if (cycleStartNode is null) {
+            throw new NullReferenceException("There is no cycle entrance in the graph");
+        }
+        List<Node> nodesToAdd = PathFinding.AStar(m_nodeArray, t_startNode, cycleStartNode, this);
+        foreach (Node node in nodesToAdd) {
+            node.setRoomType(NodeType.Cycle);
+        }
+    }
+
+    private Node? getFurthestNodeFromList(List<Node> t_nodesList, Node t_node) {
+        if (t_nodesList.Count == 0) {
+            throw new NullReferenceException("Nodes list can't be empty :(");
+        }
+        Node? furthestNode = null;
+        Vector2 biggestDistance = Vector2.zero();
+        foreach (Node? node in t_nodesList) {
+            Vector2 distance = t_node.Position - node.Position;
+            if (distance <= biggestDistance) {
+                continue;
+            }
+            furthestNode = node;
+            biggestDistance = distance;
+        }
+        return furthestNode;
+    }
+
     private List<Node> getNeighbourNodes(Node t_node) {
-        int xPosition = t_node.XPosition;
-        int yPosition = t_node.YPosition;
+        int xPosition = t_node.Position.X;
+        int yPosition = t_node.Position.Y;
         List<Node> returnList = new List<Node>();
         // Define the relative positions for von Neumann neighborhood
         int[][] directions = new int[][] {
@@ -50,11 +108,14 @@
             if (!isNodeOutsideGrid(newX, newY)) {
                 continue;
             }
+            if (m_grid[newX, newY].NodeType != NodeType.None) {
+                continue;
+            }
             returnList.Add(m_grid[newX, newY]);
         }
         return returnList;
     }
-
+    
     // Check if node is outside the grid.
     private bool isNodeOutsideGrid(int t_xPosition, int t_yPosition) {
         return t_xPosition >= 0 && t_xPosition < m_width && t_yPosition >= 0 && t_yPosition < m_height;
