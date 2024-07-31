@@ -68,7 +68,7 @@ public class Graph {
         if (cycleStartNode is null) {
             throw new NullReferenceException("There is no cycle entrance in the graph");
         }
-        List<Node> nodesToAdd = PathFinding.AStar(m_nodeArray, t_startNode, cycleStartNode, this);
+        List<Node> nodesToAdd = PathFinding.findPath(m_nodeArray, t_startNode, cycleStartNode);
         foreach (Node node in nodesToAdd) {
             node.setRoomType(NodeType.Cycle);
         }

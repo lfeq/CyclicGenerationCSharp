@@ -6,11 +6,11 @@ public class Node {
     public readonly List<Node> adjacentNodes = new List<Node>();
     
     // Pathfinding variables
-    public float shortestDistance;
-    public Node previousNode;
-    public float distanceToTarget;
-    public float heuristic;
+    public float distanceToStartNode;
+    public float distanceToTargetNode;
+    public float totalCost;
     public List<Node> neighbourNodes = new List<Node>();
+    public Node previousNode;
 
     public void setRoomType(NodeType t_nodeType) {
         NodeType = t_nodeType;
