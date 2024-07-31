@@ -11,7 +11,6 @@ public class PathFinding {
         while (nodesToVisit.Count != 0) {
             visitingNode = nodesToVisit[0];
             if (visitingNode == t_targetNode) {
-                visited.Add(visitingNode);
                 break;
             }
             List<Node> neighbourNodes = visitingNode.neighbourNodes;

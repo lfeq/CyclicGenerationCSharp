@@ -74,6 +74,21 @@ public class Graph {
         }
     }
 
+    public void generateGoal() {
+        List<Node> allCycleNodes = getAllNodesOfType(NodeType.Cycle);
+        Node endCycle = allCycleNodes[m_random.Next(0, allCycleNodes.Count)];
+        while (endCycle.hasNeighbourOfType(NodeType.CycleEntrance)) {
+            allCycleNodes.Remove(endCycle);
+            allCycleNodes.TrimExcess();
+            endCycle = allCycleNodes[m_random.Next(0, allCycleNodes.Count)];
+        }
+        endCycle.setRoomType(NodeType.CycleEnd);
+        List<Node> endCycleNodeNeighbours = endCycle.getNeighboursOfType(NodeType.None);
+        Node goal = endCycleNodeNeighbours[m_random.Next(0, endCycleNodeNeighbours.Count)];
+        goal.setRoomType(NodeType.Goal);
+        addEdge(endCycle, goal);
+    }
+
     private Node? getFurthestNodeFromList(List<Node> t_nodesList, Node t_node) {
         if (t_nodesList.Count == 0) {
             throw new NullReferenceException("Nodes list can't be empty :(");
@@ -97,10 +112,10 @@ public class Graph {
         List<Node> returnList = new List<Node>();
         // Define the relative positions for von Neumann neighborhood
         int[][] directions = new int[][] {
-            new int[] {0, -1},  // Up
-            new int[] {0, 1},   // Down
-            new int[] {-1, 0},  // Left
-            new int[] {1, 0}    // Right
+            new int[] { 0, -1 }, // Up
+            new int[] { 0, 1 }, // Down
+            new int[] { -1, 0 }, // Left
+            new int[] { 1, 0 } // Right
         };
         foreach (int[] dir in directions) {
             int newX = xPosition + dir[0];
@@ -115,7 +130,7 @@ public class Graph {
         }
         return returnList;
     }
-    
+
     // Check if node is outside the grid.
     private bool isNodeOutsideGrid(int t_xPosition, int t_yPosition) {
         return t_xPosition >= 0 && t_xPosition < m_width && t_yPosition >= 0 && t_yPosition < m_height;
@@ -139,6 +154,18 @@ public class Graph {
             }
         }
         return null;
+    }
+
+    private List<Node> getAllNodesOfType(NodeType t_nodeType) {
+        List<Node> nodesToReturn = new List<Node>();
+        for (int y = 0; y < m_height; y++) {
+            for (int x = 0; x < m_width; x++) {
+                if (m_grid[x, y].NodeType == t_nodeType) {
+                    nodesToReturn.Add(m_grid[x, y]);
+                }
+            }
+        }
+        return nodesToReturn;
     }
 
     public override string ToString() {

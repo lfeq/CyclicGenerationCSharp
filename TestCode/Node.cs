@@ -4,7 +4,7 @@ public class Node {
     public Vector2 Position { get; private set; }
     public NodeType NodeType { get; private set; }
     public readonly List<Node> adjacentNodes = new List<Node>();
-    
+
     // Pathfinding variables
     public float distanceToStartNode;
     public float distanceToTargetNode;
@@ -14,6 +14,25 @@ public class Node {
 
     public void setRoomType(NodeType t_nodeType) {
         NodeType = t_nodeType;
+    }
+
+    public bool hasNeighbourOfType(NodeType t_nodeType) {
+        foreach (Node neighbourNode in neighbourNodes) {
+            if (neighbourNode.NodeType == t_nodeType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<Node> getNeighboursOfType(NodeType t_nodeType) {
+        List<Node> returnList = new List<Node>();
+        foreach (Node neighbourNode in neighbourNodes) {
+            if (neighbourNode.NodeType == t_nodeType) {
+                returnList.Add(neighbourNode);
+            }
+        }
+        return returnList;
     }
 
     #region Overrides
@@ -46,6 +65,8 @@ public class Node {
                 return "S";
             case NodeType.Cycle:
                 return "C";
+            case NodeType.CycleEnd:
+                return "F";
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -100,9 +121,5 @@ public enum NodeType {
     Room = 3,
     CycleEntrance = 4,
     Cycle = 5,
-}
-
-public class NodeData {
-    public string Label { get; set; }
-    public string Type { get; set; }
+    CycleEnd = 6,
 }
