@@ -1,5 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using TestCode.Graphs;
+
 Graph newGraph = new Graph(5, 5);
 newGraph.setDungeonEntrance();
 Console.WriteLine("Setting entrance");
@@ -13,3 +15,7 @@ Console.WriteLine(newGraph.ToString());
 newGraph.generateGoal();
 Console.WriteLine("Setting cycle end");
 Console.WriteLine(newGraph.ToString());
+LowResolutionTilemap lowResolutionTilemap = new LowResolutionTilemap(newGraph);
+lowResolutionTilemap.generateLowResolutionTileMap(newGraph);
+Console.WriteLine("Low Res Tilemap");
+Console.WriteLine(lowResolutionTilemap.ToString());
