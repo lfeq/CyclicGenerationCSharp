@@ -5,7 +5,7 @@ public class Graph {
     private readonly Node[] m_nodeArray;
     public int Width { get; private set; }
     public int Height { get; private set; }
-    private Random m_random = new Random();
+    private readonly Random m_random = new Random(2);
 
     public Graph(int t_width, int t_height) {
         Width = t_width;
@@ -38,9 +38,8 @@ public class Graph {
     }
 
     public void setDungeonEntrance() {
-        Random random = new Random();
-        int randomXPosition = random.Next(0, Width);
-        int randomYPosition = random.Next(0, Height);
+        int randomXPosition = m_random.Next(0, Width);
+        int randomYPosition = m_random.Next(0, Height);
         m_grid[randomXPosition, randomYPosition].setRoomType(NodeType.Entrance);
     }
 
@@ -50,7 +49,9 @@ public class Graph {
             throw new NullReferenceException("There is no entrance in the graph");
         }
         List<Node> neighbourNodes = getNeighbourNodes(startNode);
-        neighbourNodes[m_random.Next(0, neighbourNodes.Count)].setRoomType(NodeType.CycleEntrance);
+        Node randomNeighbour = neighbourNodes[m_random.Next(0, neighbourNodes.Count)];
+        randomNeighbour.setRoomType(NodeType.CycleEntrance);
+        addEdge(startNode, randomNeighbour);
     }
 
     public void generatePath(int t_maxIterations) {
@@ -77,8 +78,17 @@ public class Graph {
             throw new NullReferenceException("There is no cycle entrance in the graph");
         }
         List<Node> nodesToAdd = PathFinding.findPath(m_nodeArray, t_startNode, cycleStartNode);
-        foreach (Node node in nodesToAdd) {
+        for (int i = 0; i < nodesToAdd.Count; i++) {
+            Node node = nodesToAdd[i];
             node.setRoomType(NodeType.Cycle);
+            if (i == 0) {
+                addEdge(node, t_startNode);
+                continue;
+            }
+            if (i == nodesToAdd.Count - 1) {
+                addEdge(node, cycleStartNode);
+            }
+            addEdge(node, nodesToAdd[i - 1]);
         }
     }
 
