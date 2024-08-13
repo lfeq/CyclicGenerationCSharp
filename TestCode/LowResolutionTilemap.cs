@@ -1,11 +1,16 @@
 ﻿namespace TestCode.Graphs;
 
 public class LowResolutionTilemap {
+    public int Width { get; private set; }
+    public int Height { get; private set; }
+    
     private const int SIZE_MULTIPLIER = 2;
     private LowResolutionTile[,] m_tilemap;
 
     public LowResolutionTilemap(Graph t_graph) {
-        m_tilemap = new LowResolutionTile[t_graph.Width * SIZE_MULTIPLIER + 1, t_graph.Height * SIZE_MULTIPLIER + 1];
+        Width = t_graph.Width * SIZE_MULTIPLIER + 1;
+        Height = t_graph.Height * SIZE_MULTIPLIER + 1;
+        m_tilemap = new LowResolutionTile[Width, Height];
         for (int y = 0; y < m_tilemap.GetLength(1); y++) {
             for (int x = 0; x < m_tilemap.GetLength(0); x++) {
                 m_tilemap[x, y] = new LowResolutionTile(LowResolutionTileType.Empty, new Vector2(x, y));
@@ -21,6 +26,13 @@ public class LowResolutionTilemap {
                 addDoorToLowerNeighbour(graphX, graphY, t_graph, tileX, tileY);
             }
         }
+    }
+
+    public LowResolutionTile getTileInPosition(Vector2 t_position) {
+        if (t_position.X > Width || t_position.Y > Height) {
+            throw new Exception("Position out of bounds of the tilemap");
+        }
+        return m_tilemap[t_position.X, t_position.Y];
     }
 
     private void addTileToTileMap(Node t_node, Vector2 t_position) {
