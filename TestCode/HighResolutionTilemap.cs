@@ -9,12 +9,14 @@ public class HighResolutionTilemap {
     private const int SIZE_MULTIPLIER = 7;
     private readonly LowResolutionTilemap m_lowResolutionTilemap;
     private readonly HighResolutionTile[,] m_highResolutionTilemap;
+    private readonly List<Area> m_areas;
 
     public HighResolutionTilemap(LowResolutionTilemap t_lowResolutionTilemap) {
         m_lowResolutionTilemap = t_lowResolutionTilemap;
         Width = m_lowResolutionTilemap.Width * SIZE_MULTIPLIER;
         Height = m_lowResolutionTilemap.Height * SIZE_MULTIPLIER;
         m_highResolutionTilemap = new HighResolutionTile[Width, Height];
+        m_areas = new List<Area>();
         for (int x = 0; x < Width; x++) {
             for (int y = 0; y < Height; y++) {
                 m_highResolutionTilemap[x, y] = new HighResolutionTile();
@@ -48,7 +50,11 @@ public class HighResolutionTilemap {
         // Fill tiles with type
         List<HighResolutionTile> tilesInSpace = fillSpaceWithElements(t_tileX, t_tileY, lowResolutionTile);
         Vector2 middlePosition = new Vector2(t_tileX + SIZE_MULTIPLIER / 2, t_tileY + SIZE_MULTIPLIER / 2);
-        // TODO: maybe add areas
+        if (lowResolutionTile.tileType == LowResolutionTileType.Room) {
+            m_areas.Add(new Area(middlePosition, lowResolutionTile, AreaType.Room, tilesInSpace));
+        }else if (lowResolutionTile.tileType == LowResolutionTileType.Door) {
+            m_areas.Add(new Area(middlePosition, lowResolutionTile, AreaType.Door, tilesInSpace));
+        }
     }
 
     private List<HighResolutionTile> fillSpaceWithElements(int t_tileX, int t_tileY,
@@ -81,26 +87,26 @@ public class HighResolutionTilemap {
     }
 }
 
-public class HighResolutionTile {
-    public Vector2 position;
-    public HighResolutionTileType tileType = HighResolutionTileType.None;
+public class Area {
+    public AreaType AreaType { get; private set; }
 
-    public override string ToString() {
-        switch (tileType) {
-            case HighResolutionTileType.None:
-                return ".";
-            case HighResolutionTileType.Room:
-                return "X";
-            case HighResolutionTileType.Door:
-                return "D";
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+    private readonly List<Area> m_connectedAreas;
+    private readonly List<HighResolutionTile> m_tiles;
+    private readonly LowResolutionTile m_lowResolutionTile;
+    private Vector2 m_position;
+
+    public Area(Vector2 t_position, LowResolutionTile t_lowResolutionTile, AreaType t_areaType,
+        List<HighResolutionTile> t_tilesInRoom) {
+        m_position = t_position;
+        m_lowResolutionTile = t_lowResolutionTile;
+        m_tiles = t_tilesInRoom;
+        AreaType = t_areaType;
+        m_connectedAreas = new List<Area>();
     }
 }
 
-public enum HighResolutionTileType {
+public enum AreaType {
     None,
     Room,
-    Door,
+    Door
 }
