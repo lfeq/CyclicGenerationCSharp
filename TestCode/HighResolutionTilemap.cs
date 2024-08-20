@@ -26,6 +26,20 @@ public class HighResolutionTilemap {
 
     public void generateTilemap() {
         turnLowResolutionTilemapToHighResolutionTilemap();
+        connectAreas();
+    }
+
+    private void connectAreas() {
+        foreach (Area area in m_areas) {
+            List<LowResolutionTile> lowResolutionTilesNeighbours =
+                m_lowResolutionTilemap.getNeighbourTiles(area.LowResolutionTile);
+            foreach (LowResolutionTile lowResolutionTile in lowResolutionTilesNeighbours) {
+                Area neighbourArea = m_areas.Find(a => a.LowResolutionTile == lowResolutionTile);
+                if (neighbourArea != null) {
+                    area.connect(neighbourArea);
+                }
+            }
+        }
     }
 
     private void turnLowResolutionTilemapToHighResolutionTilemap() {
@@ -41,7 +55,7 @@ public class HighResolutionTilemap {
     }
 
     private void addRoomFromLowResolutionTilemap(int t_lrTilemapX, int t_lrTilemapY, int t_tileX, int t_tileY) {
-        // Get tile from lowres tilemap
+        // Get tile from low resolution tilemap
         LowResolutionTile lowResolutionTile =
             m_lowResolutionTilemap.getTileInPosition(new Vector2(t_lrTilemapX, t_lrTilemapY));
         if (lowResolutionTile.tileType == LowResolutionTileType.Empty) {
@@ -89,19 +103,23 @@ public class HighResolutionTilemap {
 
 public class Area {
     public AreaType AreaType { get; private set; }
+    public LowResolutionTile LowResolutionTile { get; private set; }
 
     private readonly List<Area> m_connectedAreas;
     private readonly List<HighResolutionTile> m_tiles;
-    private readonly LowResolutionTile m_lowResolutionTile;
     private Vector2 m_position;
 
     public Area(Vector2 t_position, LowResolutionTile t_lowResolutionTile, AreaType t_areaType,
         List<HighResolutionTile> t_tilesInRoom) {
         m_position = t_position;
-        m_lowResolutionTile = t_lowResolutionTile;
+        LowResolutionTile = t_lowResolutionTile;
         m_tiles = t_tilesInRoom;
         AreaType = t_areaType;
         m_connectedAreas = new List<Area>();
+    }
+
+    public void connect(Area t_area) {
+        m_connectedAreas.Add(t_area);
     }
 }
 

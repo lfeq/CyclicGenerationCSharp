@@ -28,6 +28,31 @@ public class LowResolutionTilemap {
         }
     }
 
+    public List<LowResolutionTile> getNeighbourTiles(LowResolutionTile t_lowResolutionTile) {
+        int xPosition = t_lowResolutionTile.position.X;
+        int yPosition = t_lowResolutionTile.position.Y;
+        List<LowResolutionTile> returnList = new List<LowResolutionTile>();
+        // Define the relative positions for von Neumann neighborhood
+        int[][] directions = new int[][] {
+            new int[] { 0, -1 }, // Up
+            new int[] { 0, 1 }, // Down
+            new int[] { -1, 0 }, // Left
+            new int[] { 1, 0 } // Right
+        };
+        foreach (int[] dir in directions) {
+            int newX = xPosition + dir[0];
+            int newY = yPosition + dir[1];
+            if (!isNodeOutsideGrid(newX, newY)) {
+                continue;
+            }
+            if (m_tilemap[newX, newY].tileType != LowResolutionTileType.None) {
+                continue;
+            }
+            returnList.Add(m_tilemap[newX, newY]);
+        }
+        return returnList;
+    }
+
     public LowResolutionTile getTileInPosition(Vector2 t_position) {
         if (t_position.X > Width || t_position.Y > Height) {
             throw new Exception("Position out of bounds of the tilemap");
@@ -60,6 +85,10 @@ public class LowResolutionTilemap {
         LowResolutionTile doorTile =
             new LowResolutionTile(LowResolutionTileType.Door, new Vector2(t_tileMapX, t_tileMapY + 1));
         m_tilemap[t_tileMapX, t_tileMapY + 1] = doorTile;
+    }
+    
+    private bool isNodeOutsideGrid(int t_xPosition, int t_yPosition) {
+        return t_xPosition >= 0 && t_xPosition < Width && t_yPosition >= 0 && t_yPosition < Height;
     }
 
     public override string ToString() {
