@@ -45,10 +45,11 @@ public class LowResolutionTilemap {
             if (!isNodeOutsideGrid(newX, newY)) {
                 continue;
             }
-            if (m_tilemap[newX, newY].tileType != LowResolutionTileType.None) {
+            LowResolutionTile tile = m_tilemap[newX, newY];
+            if (tile.tileType == LowResolutionTileType.Empty) {
                 continue;
             }
-            returnList.Add(m_tilemap[newX, newY]);
+            returnList.Add(tile);
         }
         return returnList;
     }

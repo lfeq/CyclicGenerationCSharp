@@ -1,8 +1,12 @@
 namespace TestCode;
 
 public class HighResolutionTile {
-    public Vector2 position;
+    public readonly Vector2 position;
     public HighResolutionTileType tileType = HighResolutionTileType.None;
+
+    public HighResolutionTile(Vector2 t_position) {
+        position = t_position;
+    }
 
     public override string ToString() {
         switch (tileType) {

@@ -67,4 +67,8 @@ public class Vector2(int t_xPosition, int t_yPosition) {
     public static bool operator !=(Vector2 t_v1, Vector2 t_v2) {
         return !(t_v1 == t_v2);
     }
+    
+    public override string ToString() {
+        return $"X: {X}, Y:{Y}";
+    }
 }

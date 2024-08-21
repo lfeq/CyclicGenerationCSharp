@@ -29,3 +29,5 @@ Console.WriteLine(lowResolutionTilemap.ToString());
 // Create final tilemap
 HighResolutionTilemap highResolutionTilemap = new HighResolutionTilemap(lowResolutionTilemap);
 highResolutionTilemap.generateTilemap();
+Console.WriteLine("High Resolution tile map");
+Console.WriteLine(highResolutionTilemap.ToString());

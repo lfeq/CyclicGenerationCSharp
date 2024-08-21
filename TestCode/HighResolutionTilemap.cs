@@ -19,7 +19,7 @@ public class HighResolutionTilemap {
         m_areas = new List<Area>();
         for (int x = 0; x < Width; x++) {
             for (int y = 0; y < Height; y++) {
-                m_highResolutionTilemap[x, y] = new HighResolutionTile();
+                m_highResolutionTilemap[x, y] = new HighResolutionTile(new Vector2(x, y));
             }
         }
     }
@@ -27,6 +27,63 @@ public class HighResolutionTilemap {
     public void generateTilemap() {
         turnLowResolutionTilemapToHighResolutionTilemap();
         connectAreas();
+        fixDoorSpaces();
+    }
+
+    // Reduces the size of a door to a single tile instead of a 7x7 room
+    private void fixDoorSpaces() {
+        foreach (Area area in m_areas) {
+            if (area.AreaType != AreaType.Door) {
+                // Skip non door rooms
+                continue;
+            }
+            List<HighResolutionTile> deletedTiles = shrinkDoorSpaceToOne(area);
+            addDeletedTilesToNeigbourAreas(area, deletedTiles);
+        }
+    }
+
+    private void addDeletedTilesToNeigbourAreas(Area t_door, List<HighResolutionTile> t_deletedTiles) {
+        List<Area> connectedAreas = t_door.getConnectedAreas();
+        if (connectedAreas == null || connectedAreas.Count == 0) {
+            return;
+        } // Early exit just in case
+        Dictionary<string, Func<Area?, bool>> directions = new Dictionary<string, Func<Area?, bool>> {
+            { "Above", t_r => t_r.position.Y < t_door.position.Y },
+            { "Below", t_r => t_r.position.Y > t_door.position.Y },
+            { "Left", t_r => t_r.position.X < t_door.position.X },
+            { "Right", t_r => t_r.position.X > t_door.position.X },
+        };
+        Dictionary<string, Area?> connectedRoomMap = directions.ToDictionary(
+            t_direction => t_direction.Key,
+            t_direction => connectedAreas.Find(t_r => t_direction.Value(t_r))
+        );
+        foreach (HighResolutionTile tile in t_deletedTiles) {
+            foreach (KeyValuePair<string, Area> direction in connectedRoomMap) {
+                if (direction.Value == null) {
+                    continue;
+                }
+                if ((direction.Key == "Above" && tile.position.Y < t_door.position.Y) ||
+                    (direction.Key == "Below" && tile.position.Y > t_door.position.Y) ||
+                    (direction.Key == "Left" && tile.position.X < t_door.position.X) ||
+                    (direction.Key == "Right" && tile.position.X > t_door.position.X)) {
+                    tile.tileType = HighResolutionTileType.Room;
+                    direction.Value.getTiles().Add(tile);
+                    break;
+                }
+            }
+        }
+    }
+
+    private List<HighResolutionTile> shrinkDoorSpaceToOne(Area t_area) {
+        List<HighResolutionTile> listTilesToRemove = new List<HighResolutionTile>();
+        foreach (HighResolutionTile tile in t_area.getTiles()) {
+            if (tile.position == t_area.position) {
+                continue;
+            }
+            tile.tileType = HighResolutionTileType.None;
+            listTilesToRemove.Add(tile);
+        }
+        return listTilesToRemove;
     }
 
     private void connectAreas() {
@@ -66,7 +123,8 @@ public class HighResolutionTilemap {
         Vector2 middlePosition = new Vector2(t_tileX + SIZE_MULTIPLIER / 2, t_tileY + SIZE_MULTIPLIER / 2);
         if (lowResolutionTile.tileType == LowResolutionTileType.Room) {
             m_areas.Add(new Area(middlePosition, lowResolutionTile, AreaType.Room, tilesInSpace));
-        }else if (lowResolutionTile.tileType == LowResolutionTileType.Door) {
+        }
+        else if (lowResolutionTile.tileType == LowResolutionTileType.Door) {
             m_areas.Add(new Area(middlePosition, lowResolutionTile, AreaType.Door, tilesInSpace));
         }
     }
@@ -104,14 +162,14 @@ public class HighResolutionTilemap {
 public class Area {
     public AreaType AreaType { get; private set; }
     public LowResolutionTile LowResolutionTile { get; private set; }
+    public Vector2 position;
 
     private readonly List<Area> m_connectedAreas;
     private readonly List<HighResolutionTile> m_tiles;
-    private Vector2 m_position;
 
     public Area(Vector2 t_position, LowResolutionTile t_lowResolutionTile, AreaType t_areaType,
         List<HighResolutionTile> t_tilesInRoom) {
-        m_position = t_position;
+        position = t_position;
         LowResolutionTile = t_lowResolutionTile;
         m_tiles = t_tilesInRoom;
         AreaType = t_areaType;
@@ -120,6 +178,14 @@ public class Area {
 
     public void connect(Area t_area) {
         m_connectedAreas.Add(t_area);
+    }
+
+    public List<HighResolutionTile> getTiles() {
+        return m_tiles;
+    }
+
+    public List<Area> getConnectedAreas() {
+        return m_connectedAreas;
     }
 }
 
