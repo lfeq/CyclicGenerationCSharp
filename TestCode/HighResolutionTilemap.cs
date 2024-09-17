@@ -2,15 +2,29 @@
 
 namespace TestCode;
 
+/// <summary>
+/// Represents a high-resolution tilemap generated from a low-resolution tilemap.
+/// </summary>
 public class HighResolutionTilemap {
-    public int Width { get; private set; }
-    public int Height { get; private set; }
+    /// <summary>
+    /// Gets the width of the high-resolution tilemap.
+    /// </summary>
+    private int Width { get; }
+
+    /// <summary>
+    /// Gets the height of the high-resolution tilemap.
+    /// </summary>
+    private int Height { get; }
 
     private const int SIZE_MULTIPLIER = 7;
     private readonly LowResolutionTilemap m_lowResolutionTilemap;
     private readonly HighResolutionTile[,] m_highResolutionTilemap;
     private readonly List<Area> m_areas;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HighResolutionTilemap"/> class.
+    /// </summary>
+    /// <param name="t_lowResolutionTilemap">The low-resolution tilemap to generate the high-resolution tilemap from.</param>
     public HighResolutionTilemap(LowResolutionTilemap t_lowResolutionTilemap) {
         m_lowResolutionTilemap = t_lowResolutionTilemap;
         Width = m_lowResolutionTilemap.Width * SIZE_MULTIPLIER;
@@ -24,13 +38,18 @@ public class HighResolutionTilemap {
         }
     }
 
+    /// <summary>
+    /// Generates the high-resolution tilemap by converting the low-resolution tilemap, connecting areas, and fixing door spaces.
+    /// </summary>
     public void generateTilemap() {
         turnLowResolutionTilemapToHighResolutionTilemap();
         connectAreas();
         fixDoorSpaces();
     }
 
-    // Reduces the size of a door to a single tile instead of a 7x7 room
+    /// <summary>
+    /// Reduces the size of door areas to a single tile in the high-resolution tilemap.
+    /// </summary>
     private void fixDoorSpaces() {
         foreach (Area area in m_areas) {
             if (area.AreaType != AreaType.Door) {
@@ -42,6 +61,11 @@ public class HighResolutionTilemap {
         }
     }
 
+    /// <summary>
+    /// Adds deleted tiles (shrunk doors) to neighboring areas.
+    /// </summary>
+    /// <param name="t_door">The door area whose tiles were shrunk.</param>
+    /// <param name="t_deletedTiles">The list of tiles removed from the door area.</param>
     private void addDeletedTilesToNeigbourAreas(Area t_door, List<HighResolutionTile> t_deletedTiles) {
         List<Area> connectedAreas = t_door.getConnectedAreas();
         if (connectedAreas == null || connectedAreas.Count == 0) {
@@ -74,6 +98,11 @@ public class HighResolutionTilemap {
         }
     }
 
+    /// <summary>
+    /// Shrinks a door area to a single tile and returns the removed tiles.
+    /// </summary>
+    /// <param name="t_area">The area to shrink.</param>
+    /// <returns>A list of tiles removed from the area.</returns>
     private List<HighResolutionTile> shrinkDoorSpaceToOne(Area t_area) {
         List<HighResolutionTile> listTilesToRemove = new List<HighResolutionTile>();
         foreach (HighResolutionTile tile in t_area.getTiles()) {
@@ -86,6 +115,9 @@ public class HighResolutionTilemap {
         return listTilesToRemove;
     }
 
+    /// <summary>
+    /// Connects neighboring areas in the high-resolution tilemap.
+    /// </summary>
     private void connectAreas() {
         foreach (Area area in m_areas) {
             List<LowResolutionTile> lowResolutionTilesNeighbours =
@@ -99,6 +131,9 @@ public class HighResolutionTilemap {
         }
     }
 
+    /// <summary>
+    /// Converts the low-resolution tilemap to a high-resolution tilemap by expanding each tile.
+    /// </summary>
     private void turnLowResolutionTilemapToHighResolutionTilemap() {
         for (int lrTilemapY = 1, tileY = 1;
              lrTilemapY < m_lowResolutionTilemap.Height;
@@ -111,6 +146,13 @@ public class HighResolutionTilemap {
         }
     }
 
+    /// <summary>
+    /// Adds a room or door from the low-resolution tilemap to the high-resolution tilemap.
+    /// </summary>
+    /// <param name="t_lrTilemapX">The X position in the low-resolution tilemap.</param>
+    /// <param name="t_lrTilemapY">The Y position in the low-resolution tilemap.</param>
+    /// <param name="t_tileX">The X position in the high-resolution tilemap.</param>
+    /// <param name="t_tileY">The Y position in the high-resolution tilemap.</param>
     private void addRoomFromLowResolutionTilemap(int t_lrTilemapX, int t_lrTilemapY, int t_tileX, int t_tileY) {
         // Get tile from low resolution tilemap
         LowResolutionTile lowResolutionTile =
@@ -129,12 +171,19 @@ public class HighResolutionTilemap {
         }
     }
 
+    /// <summary>
+    /// Fills a specified area of the high-resolution tilemap with elements from the low-resolution tilemap.
+    /// </summary>
+    /// <param name="t_tileX">The starting X position in the high-resolution tilemap.</param>
+    /// <param name="t_tileY">The starting Y position in the high-resolution tilemap.</param>
+    /// <param name="t_lowResolutionTile">The low-resolution tile data to apply.</param>
+    /// <returns>A list of high-resolution tiles that were filled.</returns>
     private List<HighResolutionTile> fillSpaceWithElements(int t_tileX, int t_tileY,
         LowResolutionTile t_lowResolutionTile) {
-        List<HighResolutionTile> tileList = new List<HighResolutionTile>();
-        for (int Y = 0; Y < SIZE_MULTIPLIER; Y++) {
-            for (int X = 0; X < SIZE_MULTIPLIER; X++) {
-                Vector2 position = new Vector2(t_tileX + X, t_tileY + Y);
+        List<HighResolutionTile> tileList = [];
+        for (int y = 0; y < SIZE_MULTIPLIER; y++) {
+            for (int x = 0; x < SIZE_MULTIPLIER; x++) {
+                Vector2 position = new Vector2(t_tileX + x, t_tileY + y);
                 // Set high resolution tile type at given position to door if low resolution tile is type door,
                 // else set high resolution tile type to room.
                 m_highResolutionTilemap[position.X, position.Y].tileType =
@@ -147,6 +196,10 @@ public class HighResolutionTilemap {
         return tileList;
     }
 
+    /// <summary>
+    /// Returns a string representation of the high-resolution tilemap.
+    /// </summary>
+    /// <returns>A string representing the high-resolution tilemap.</returns>
     public override string ToString() {
         string graphString = "";
         for (int y = 0; y < m_highResolutionTilemap.GetLength(1); y++) {
@@ -159,10 +212,13 @@ public class HighResolutionTilemap {
     }
 }
 
+/// <summary>
+/// Represents an area (room or door) in the tilemap.
+/// </summary>
 public class Area {
-    public AreaType AreaType { get; private set; }
-    public LowResolutionTile LowResolutionTile { get; private set; }
-    public Vector2 position;
+    public AreaType AreaType { get; }
+    public LowResolutionTile LowResolutionTile { get; }
+    public readonly Vector2 position;
 
     private readonly List<Area> m_connectedAreas;
     private readonly List<HighResolutionTile> m_tiles;
@@ -176,19 +232,34 @@ public class Area {
         m_connectedAreas = new List<Area>();
     }
 
+    /// <summary>
+    /// Connects this area to another area.
+    /// </summary>
+    /// <param name="t_area">The area to connect to.</param>
     public void connect(Area t_area) {
         m_connectedAreas.Add(t_area);
     }
 
+    /// <summary>
+    /// Gets the list of tiles in this area.
+    /// </summary>
+    /// <returns>The list of tiles in the area.</returns>
     public List<HighResolutionTile> getTiles() {
         return m_tiles;
     }
 
+    /// <summary>
+    /// Gets the list of areas connected to this area.
+    /// </summary>
+    /// <returns>The list of connected areas.</returns>
     public List<Area> getConnectedAreas() {
         return m_connectedAreas;
     }
 }
 
+/// <summary>
+/// Enumeration representing the type of area (Room or Door).
+/// </summary>
 public enum AreaType {
     None,
     Room,
