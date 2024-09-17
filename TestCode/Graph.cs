@@ -1,12 +1,20 @@
 ﻿using TestCode;
 
+/// <summary>
+/// Represents a graph with nodes arranged in a grid.
+/// </summary>
 public class Graph {
     private readonly Node[,] m_grid;
     private readonly Node[] m_nodeArray;
     public int Width { get; private set; }
     public int Height { get; private set; }
-    private readonly Random m_random = new Random(2);
+    private readonly Random m_random = new Random(1);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Graph"/> class with the specified width and height.
+    /// </summary>
+    /// <param name="t_width">Width of the grid.</param>
+    /// <param name="t_height">Height of the grid.</param>
     public Graph(int t_width, int t_height) {
         Width = t_width;
         Height = t_height;
@@ -21,7 +29,7 @@ public class Graph {
                 m_nodeArray[i++] = m_grid[x, y];
             }
         }
-        // Setup weights
+        // Setup neighbors
         for (int y = 0; y < t_height; y++) {
             for (int x = 0; x < t_width; x++) {
                 m_grid[x, y].neighbourNodes = getNeighbourNodes(m_grid[x, y]);
@@ -29,20 +37,38 @@ public class Graph {
         }
     }
 
+    /// <summary>
+    /// Retrieves the node at the specified position.
+    /// </summary>
+    /// <param name="t_position">Position in the grid.</param>
+    /// <returns>The node at the given position.</returns>
     public Node getNodeInPosition(Vector2 t_position) {
         return m_grid[t_position.X, t_position.Y];
     }
 
+    /// <summary>
+    /// Checks if two nodes are connected.
+    /// </summary>
+    /// <param name="t_node1">The first node.</param>
+    /// <param name="t_node2">The second node.</param>
+    /// <returns>True if the nodes are connected, otherwise false.</returns>
     public bool areNodesConnected(Node t_node1, Node t_node2) {
         return t_node1.adjacentNodes.Contains(t_node2);
     }
 
+    /// <summary>
+    /// Sets a random node in the graph as the dungeon entrance.
+    /// </summary>
     public void setDungeonEntrance() {
         int randomXPosition = m_random.Next(0, Width);
         int randomYPosition = m_random.Next(0, Height);
         m_grid[randomXPosition, randomYPosition].setRoomType(NodeType.Entrance);
     }
 
+    /// <summary>
+    /// Sets a random neighbor of the dungeon entrance as the cycle entrance.
+    /// </summary>
+    /// <exception cref="NullReferenceException">Thrown if no entrance is found in the graph.</exception>
     public void setCycleEntrance() {
         Node? startNode = getFirstNodeOfType(NodeType.Entrance);
         if (startNode is null) {
@@ -54,6 +80,11 @@ public class Graph {
         addEdge(startNode, randomNeighbour);
     }
 
+    /// <summary>
+    /// Generates a path from the cycle entrance through the graph.
+    /// </summary>
+    /// <param name="t_maxIterations">Maximum number of iterations to generate the path.</param>
+    /// <exception cref="NullReferenceException">Thrown if no cycle entrance is found.</exception>
     public void generatePath(int t_maxIterations) {
         Node? cycleStartNode = getFirstNodeOfType(NodeType.CycleEntrance);
         if (cycleStartNode is null) {
@@ -72,6 +103,10 @@ public class Graph {
         connectCycle(lastNode);
     }
 
+    /// <summary>
+    /// Connects the generated cycle path to the cycle entrance.
+    /// </summary>
+    /// <param name="t_startNode">The node from which to start connecting the cycle.</param>
     private void connectCycle(Node t_startNode) {
         Node? cycleStartNode = getFirstNodeOfType(NodeType.CycleEntrance);
         if (cycleStartNode is null) {
@@ -92,6 +127,9 @@ public class Graph {
         }
     }
 
+    /// <summary>
+    /// Generates the goal of the graph by setting the goal node and the end cycle node.
+    /// </summary>
     public void generateGoal() {
         List<Node> allCycleNodes = getAllNodesOfType(NodeType.Cycle);
         Node endCycle = allCycleNodes[m_random.Next(0, allCycleNodes.Count)];
@@ -107,15 +145,22 @@ public class Graph {
         addEdge(endCycle, goal);
     }
 
-    private Node? getFurthestNodeFromList(List<Node> t_nodesList, Node t_node) {
-        if (t_nodesList.Count == 0) {
-            throw new NullReferenceException("Nodes list can't be empty :(");
+    /// <summary>
+    /// Retrieves the furthest node from the given list of nodes.
+    /// </summary>
+    /// <param name="t_candidateNodes">List of candidate nodes.</param>
+    /// <param name="t_referenceNode">Reference node to measure distance from.</param>
+    /// <returns>The furthest node from the list.</returns>
+    /// <exception cref="NullReferenceException">Thrown if the node list is empty.</exception>
+    private Node? getFurthestNodeFromList(List<Node> t_candidateNodes, Node t_referenceNode) {
+        if (t_candidateNodes.Count == 0) {
+            throw new NullReferenceException("Node list can't be empty :(");
         }
         Node? furthestNode = null;
         Vector2 biggestDistance = Vector2.zero();
-        foreach (Node? node in t_nodesList) {
-            Vector2 distance = t_node.Position - node.Position;
-            if (distance <= biggestDistance) {
+        foreach (Node? node in t_candidateNodes) {
+            Vector2 distance = t_referenceNode.Position - node.Position;
+            if (distance < biggestDistance) {
                 continue;
             }
             furthestNode = node;
@@ -124,6 +169,11 @@ public class Graph {
         return furthestNode;
     }
 
+    /// <summary>
+    /// Retrieves all valid neighbors of the given node.
+    /// </summary>
+    /// <param name="t_node">The node whose neighbors are to be retrieved.</param>
+    /// <returns>A list of neighboring nodes.</returns>
     private List<Node> getNeighbourNodes(Node t_node) {
         int xPosition = t_node.Position.X;
         int yPosition = t_node.Position.Y;
@@ -149,11 +199,21 @@ public class Graph {
         return returnList;
     }
 
-    // Check if node is outside the grid.
+    /// <summary>
+    /// Checks if the specified position is outside the grid.
+    /// </summary>
+    /// <param name="t_xPosition">X position of the node.</param>
+    /// <param name="t_yPosition">Y position of the node.</param>
+    /// <returns>True if the position is within the grid boundaries; otherwise, false.</returns>
     private bool isNodeOutsideGrid(int t_xPosition, int t_yPosition) {
         return t_xPosition >= 0 && t_xPosition < Width && t_yPosition >= 0 && t_yPosition < Height;
     }
 
+    /// <summary>
+    /// Adds an edge (connection) between two nodes.
+    /// </summary>
+    /// <param name="t_firstNode">The first node.</param>
+    /// <param name="t_secondNode">The second node.</param>
     private void addEdge(Node t_firstNode, Node t_secondNode) {
         if (!t_firstNode.adjacentNodes.Contains(t_secondNode)) {
             t_firstNode.adjacentNodes.Add(t_secondNode);
@@ -163,6 +223,11 @@ public class Graph {
         }
     }
 
+    /// <summary>
+    /// Retrieves the first node of the specified type.
+    /// </summary>
+    /// <param name="t_nodeType">Type of node to find.</param>
+    /// <returns>The first node of the given type, or null if not found.</returns>
     private Node? getFirstNodeOfType(NodeType t_nodeType) {
         for (int y = 0; y < Height; y++) {
             for (int x = 0; x < Width; x++) {
@@ -174,6 +239,11 @@ public class Graph {
         return null;
     }
 
+    /// <summary>
+    /// Retrieves all nodes of the specified type.
+    /// </summary>
+    /// <param name="t_nodeType">Type of node to find.</param>
+    /// <returns>A list of all nodes of the given type.</returns>
     private List<Node> getAllNodesOfType(NodeType t_nodeType) {
         List<Node> nodesToReturn = new List<Node>();
         for (int y = 0; y < Height; y++) {
@@ -186,6 +256,10 @@ public class Graph {
         return nodesToReturn;
     }
 
+    /// <summary>
+    /// Returns a string representation of the graph.
+    /// </summary>
+    /// <returns>A string representing the graph structure.</returns>
     public override string ToString() {
         string graphString = "";
         for (int y = 0; y < Height; y++) {
