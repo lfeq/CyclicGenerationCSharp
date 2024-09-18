@@ -8,7 +8,7 @@ public class Graph {
     private readonly Node[] m_nodeArray;
     public int Width { get; private set; }
     public int Height { get; private set; }
-    private readonly Random m_random = new Random(1);
+    private readonly Random m_random = new Random(3);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Graph"/> class with the specified width and height.
@@ -91,6 +91,7 @@ public class Graph {
             throw new NullReferenceException("There is no cycle entrance in the graph");
         }
         Node lastNode = cycleStartNode;
+        // This walks in a random direction trying to get the furthest away from the cycle start node.
         for (int i = 0; i < t_maxIterations; i++) {
             List<Node> lastNodeNeighbours = getNeighbourNodes(lastNode);
             Node? nextNode = getFurthestNodeFromList(lastNodeNeighbours, cycleStartNode);
@@ -116,12 +117,12 @@ public class Graph {
         for (int i = 0; i < nodesToAdd.Count; i++) {
             Node node = nodesToAdd[i];
             node.setRoomType(NodeType.Cycle);
+            if (i == nodesToAdd.Count - 1) {
+                addEdge(node, cycleStartNode);
+            }
             if (i == 0) {
                 addEdge(node, t_startNode);
                 continue;
-            }
-            if (i == nodesToAdd.Count - 1) {
-                addEdge(node, cycleStartNode);
             }
             addEdge(node, nodesToAdd[i - 1]);
         }
