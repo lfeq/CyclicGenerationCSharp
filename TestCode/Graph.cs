@@ -1,4 +1,5 @@
-﻿using TestCode;
+﻿using System.Reflection;
+using TestCode;
 
 /// <summary>
 /// Represents a graph with nodes arranged in a grid.
@@ -8,7 +9,7 @@ public class Graph {
     private readonly Node[] m_nodeArray;
     public int Width { get; private set; }
     public int Height { get; private set; }
-    private readonly Random m_random = new Random();
+    private readonly Random m_random = new Random(1986658861);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Graph"/> class with the specified width and height.
@@ -16,6 +17,7 @@ public class Graph {
     /// <param name="t_width">Width of the grid.</param>
     /// <param name="t_height">Height of the grid.</param>
     public Graph(int t_width, int t_height) {
+        Console.WriteLine($"Random seed: {m_random.Next()}");
         Width = t_width;
         Height = t_height;
         m_grid = new Node[t_width, t_height];
@@ -141,7 +143,8 @@ public class Graph {
         }
         endCycle.setRoomType(NodeType.CycleEnd);
         List<Node> endCycleNodeNeighbours = endCycle.getNeighboursOfType(NodeType.None);
-        if (endCycleNodeNeighbours.Count == 0) {
+        while (endCycleNodeNeighbours.Count == 0) {
+            endCycle.setRoomType(NodeType.Cycle);
             allCycleNodes = getAllNodesOfType(NodeType.Cycle);
             endCycle = allCycleNodes[m_random.Next(0, allCycleNodes.Count)];
             while (endCycle.hasNeighbourOfType(NodeType.Entrance)) {
@@ -151,7 +154,7 @@ public class Graph {
             }
             endCycle.setRoomType(NodeType.CycleEnd);
             endCycleNodeNeighbours = endCycle.getNeighboursOfType(NodeType.None);
-        } // Case where exit can only be place outside grid
+        } // Case where exit cannot be placed
         Node goal = endCycleNodeNeighbours[m_random.Next(0, endCycleNodeNeighbours.Count)];
         goal.setRoomType(NodeType.Goal);
         addEdge(endCycle, goal);
@@ -281,5 +284,19 @@ public class Graph {
             graphString += "\n";
         }
         return graphString;
+    }
+    
+    private int GetRandomSeed()
+    {
+        var fieldInfo = typeof(Random).GetField("_seed", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (fieldInfo != null)
+        {
+            return (int)fieldInfo.GetValue(m_random);
+        }
+        else
+        {
+            // Handle the case where the field is not found
+            throw new Exception("Could not access random seed.");
+        }
     }
 }
