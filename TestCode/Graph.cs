@@ -172,7 +172,7 @@ public class Graph {
         Vector2 biggestDistance = Vector2.zero();
         foreach (Node? node in t_candidateNodes) {
             Vector2 distance = t_referenceNode.Position - node.Position;
-            if (distance < biggestDistance) {
+            if (distance <= biggestDistance) {
                 continue;
             }
             furthestNode = node;
