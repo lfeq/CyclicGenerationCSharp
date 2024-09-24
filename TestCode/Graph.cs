@@ -8,7 +8,7 @@ public class Graph {
     private readonly Node[] m_nodeArray;
     public int Width { get; private set; }
     public int Height { get; private set; }
-    private readonly Random m_random = new Random(3);
+    private readonly Random m_random = new Random();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Graph"/> class with the specified width and height.
@@ -141,6 +141,17 @@ public class Graph {
         }
         endCycle.setRoomType(NodeType.CycleEnd);
         List<Node> endCycleNodeNeighbours = endCycle.getNeighboursOfType(NodeType.None);
+        if (endCycleNodeNeighbours.Count == 0) {
+            allCycleNodes = getAllNodesOfType(NodeType.Cycle);
+            endCycle = allCycleNodes[m_random.Next(0, allCycleNodes.Count)];
+            while (endCycle.hasNeighbourOfType(NodeType.Entrance)) {
+                allCycleNodes.Remove(endCycle);
+                allCycleNodes.TrimExcess();
+                endCycle = allCycleNodes[m_random.Next(0, allCycleNodes.Count)];
+            }
+            endCycle.setRoomType(NodeType.CycleEnd);
+            endCycleNodeNeighbours = endCycle.getNeighboursOfType(NodeType.None);
+        } // Case where exit can only be place outside grid
         Node goal = endCycleNodeNeighbours[m_random.Next(0, endCycleNodeNeighbours.Count)];
         goal.setRoomType(NodeType.Goal);
         addEdge(endCycle, goal);
