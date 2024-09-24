@@ -9,7 +9,7 @@ public class Graph {
     private readonly Node[] m_nodeArray;
     public int Width { get; private set; }
     public int Height { get; private set; }
-    private readonly Random m_random = new Random(1986658861);
+    private readonly Random m_random = new Random();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Graph"/> class with the specified width and height.
@@ -172,9 +172,9 @@ public class Graph {
             throw new NullReferenceException("Node list can't be empty :(");
         }
         Node? furthestNode = null;
-        Vector2 biggestDistance = Vector2.zero();
+        float biggestDistance = 0;
         foreach (Node? node in t_candidateNodes) {
-            Vector2 distance = t_referenceNode.Position - node.Position;
+            float distance = Vector2.distance(t_referenceNode.Position, node.Position);
             if (distance <= biggestDistance) {
                 continue;
             }
@@ -285,16 +285,13 @@ public class Graph {
         }
         return graphString;
     }
-    
-    private int GetRandomSeed()
-    {
+
+    private int GetRandomSeed() {
         var fieldInfo = typeof(Random).GetField("_seed", BindingFlags.NonPublic | BindingFlags.Instance);
-        if (fieldInfo != null)
-        {
+        if (fieldInfo != null) {
             return (int)fieldInfo.GetValue(m_random);
         }
-        else
-        {
+        else {
             // Handle the case where the field is not found
             throw new Exception("Could not access random seed.");
         }
